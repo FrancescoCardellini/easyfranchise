@@ -36,7 +36,7 @@ public class DB {
 
     public static final String PERSISTENCE_UNIT_NAME = "efserver";
 
-    private static EntityManagerFactory emf = null;
+    // private static EntityManagerFactory emf = null;
 
     /**
      * Create DB connection. Usually only the first connection goes through here.
@@ -47,6 +47,7 @@ public class DB {
      * @return
      */
     private static EntityManagerFactory getEntityManagerFactory(String dbschema, String persistenceUnit, String tenantId) {
+    	EntityManagerFactory emf = null;
         if (emf == null) {
             logger.info("getEntityManagerFactory");
             MultiTenantProvider.assignInitializerSchema(dbschema);  // needed for very first DB connection
@@ -74,6 +75,7 @@ public class DB {
      */
     @SuppressWarnings("deprecation")
     private static EntityManager getEntityManager(String dbschema, String tenantId) {
+    	EntityManagerFactory emf = null;
         dbschema = dbschema.toUpperCase();
         logger.info("getEntityManager");
         emf = getEntityManagerFactory(dbschema, PERSISTENCE_UNIT_NAME, tenantId);
