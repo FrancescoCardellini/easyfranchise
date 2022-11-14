@@ -1,0 +1,126 @@
+apiVersion: services.cloud.sap.com/v1
+kind: ServiceInstance
+metadata:
+  name: xsuaa-service
+  namespace: integration
+spec:
+  serviceOfferingName: xsuaa
+  servicePlanName: broker # https://jam4.sapjam.com/blogs/show/2dxT4cVGxTXZRJT0D1DQQM
+  externalName: xsuaa-service-external
+  parameters:
+    xsappname: easyfranchise
+    tenant-mode: shared # use "shared" for multi-tenant application
+    scopes:
+      - name: $XSAPPNAME.Display
+        description: Display Scope
+      - name: $XSAPPNAME.Backend
+        description: Backend Scope
+      - name: $XSAPPNAME.Callback
+        description: With this scope set, the callbacks for tenant onboarding, offboarding and getDependencies can be called.
+        grant-as-authority-to-apps: 
+          - $XSAPPNAME(application,sap-provisioning,tenant-onboarding)
+    role-templates:
+      - name: Viewer
+        description: Easy Franchise Viewer Role-Template
+        scope-references: [$XSAPPNAME.Display]
+      - name: Backend
+        description:  Easy Franchise Backend Role-Template
+        scope-references: [$XSAPPNAME.Backend]
+    role-collections:
+      - name: Easy Franchise Viewer (e52c471etrial)
+        description: Easy Franchise Viewer Role-Collection
+        role-template-references: [$XSAPPNAME.Viewer]
+      - name: Easy Franchise Backend (e52c471etrial)
+        description: Easy Franchise Backend Role-Collection
+        role-template-references: [$XSAPPNAME.Backend]        
+    oauth2-configuration:
+      redirect-uris: 
+      - https://*.ec57fd8.kyma.ondemand.com/**
+      - http://localhost:5000/login/callback
+      token-validity:  900
+---
+apiVersion: services.cloud.sap.com/v1
+kind: ServiceBinding
+metadata:
+  name: xsuaa-service-binding
+  namespace: integration
+spec:
+  serviceInstanceName: xsuaa-service
+  externalName: xsuaa-service-external
+  secretName: xsuaa-service-binding  
+---
+# # Resource to create instance for SaaS Registry services
+apiVersion: services.cloud.sap.com/v1
+kind: ServiceInstance
+metadata:
+  name: saas-registry-service
+  namespace: integration
+spec:
+  serviceOfferingName: saas-registry
+  servicePlanName: application
+  externalName: saas-registry-service-external
+  parameters:
+    # the xsappname refers to the one defined in xsuaa service
+    xsappname: easyfranchise
+    appName: easyfranchise-e52c471etrial
+    displayName: Easy Franchise (e52c471etrial)
+    description: Easy Franchise Basis Mission, a multitenant extension application based on SAP BTP,Kyma runtime
+    category: "Demo applications"
+    appUrls:
+      # url registered in the kyma-broker which handles SaaS provisioning (subscription/deletion of saas instances)
+      onSubscription: https://subscription.ec57fd8.kyma.ondemand.com/callback/v1.0/tenants/{tenantId}
+      getDependencies: https://subscription.ec57fd8.kyma.ondemand.com/callback/v1.0/dependencies
+    appPlans:
+      - name: default
+        description: Easy Franchise default plan
+---
+apiVersion: services.cloud.sap.com/v1
+kind: ServiceBinding
+metadata:
+  name: saas-registry-service-binding
+  namespace: integration
+spec:
+  serviceInstanceName: saas-registry-service
+  externalName: saas-registry-service-external
+  secretName: saas-registry-service-binding  
+---
+apiVersion: services.cloud.sap.com/v1
+kind: ServiceInstance
+metadata:
+  name: ef-destination-service
+  namespace: integration
+spec:
+  serviceOfferingName: destination
+  servicePlanName: lite
+  externalName: ef-destination-service-external
+---
+apiVersion: services.cloud.sap.com/v1
+kind: ServiceBinding
+metadata:
+  name: destination-service-binding
+  namespace: integration
+spec:
+  serviceInstanceName: ef-destination-service
+  externalName: ef-destination-service-external
+  secretName: destination-service-binding   
+---
+apiVersion: gateway.kyma-project.io/v1alpha1
+kind: APIRule
+metadata:
+  name: subscription-apirule
+  namespace: integration
+spec:
+  gateway: kyma-gateway.kyma-system.svc.cluster.local
+  service:
+    name: broker
+    port: 3002
+    host: subscription # adapt to your kyma cluster
+  rules:
+    - path: /.*
+      methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD"]
+      mutators:
+        - handler: header
+          config: {}
+      accessStrategies:
+        - handler: noop    
+---
