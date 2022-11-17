@@ -49,14 +49,15 @@ public class DB {
     private static EntityManagerFactory getEntityManagerFactory(String dbschema, String persistenceUnit, String tenantId) {
     	EntityManagerFactory emf = null;
         if (emf == null) {
-            logger.info("getEntityManagerFactory");
-            MultiTenantProvider.assignInitializerSchema(dbschema);  // needed for very first DB connection
+//            logger.info("getEntityManagerFactory");
+//            MultiTenantProvider.assignInitializerSchema(dbschema);  // needed for very first DB connection
+            MultiTenantProvider.assignInitializerSchema(tenantId);  // needed for very first DB connection
             try {
                 Map<String, String> props = new HashMap<String, String>();
                 props.put("hibernate.connection.username", dbschema);
                 props.put("hibernate.connection.password", getPasswordForSchema(dbschema, tenantId));
                 props.put("hibernate.connection.url", getConnectionUrl(tenantId));
-                logger.info("initiate EntityManagerFactory for persistence unit " + persistenceUnit);
+//                logger.info("initiate EntityManagerFactory for persistence unit " + persistenceUnit);
                 emf = Persistence.createEntityManagerFactory(persistenceUnit, props);
                 logger.info("CONNECTED EntityManagerFactory = " + emf);
             } catch (Exception e) {
@@ -75,15 +76,17 @@ public class DB {
      */
     @SuppressWarnings("deprecation")
     private static EntityManager getEntityManager(String dbschema, String tenantId) {
+        logger.info("--> EntityManager.getEntityManager("+dbschema+","+tenantId+")");
     	EntityManagerFactory emf = null;
-        dbschema = dbschema.toUpperCase();
-        logger.info("getEntityManager");
+//        dbschema = dbschema.toUpperCase();
+        dbschema = Util.getDBAdmin(tenantId); // XXX fix nella chiamata
         emf = getEntityManagerFactory(dbschema, PERSISTENCE_UNIT_NAME, tenantId);
         final SessionFactoryImplementor sessionFactory = ((org.hibernate.internal.SessionFactoryImpl) emf).getSessionFactory();
-        logger.info("sess = " + sessionFactory);
+//        logger.info("sess = " + sessionFactory);
         var schemaResolver = (SchemaResolver) sessionFactory.getCurrentTenantIdentifierResolver();
-        logger.info("resolver = " + schemaResolver);
-        schemaResolver.setTenantIdentifier(dbschema);
+//        logger.info("resolver = " + schemaResolver);
+//        schemaResolver.setTenantIdentifier(dbschema);
+        schemaResolver.setTenantIdentifier(tenantId);
         EntityManager em = emf.createEntityManager();
         if (em == null) {
             logger.error("Could not initialize EntityManager");
@@ -98,7 +101,8 @@ public class DB {
      * @return
      */
     static String getPasswordForSchema(String schemaName, String tenantId) {
-        if (Util.getDBAdmin(tenantId).equalsIgnoreCase(schemaName)) {
+//        if (Util.getDBAdmin(tenantId).equalsIgnoreCase(schemaName)) {
+        if (Util.getDBAdmin(tenantId).equalsIgnoreCase(schemaName) || true) {
             return Util.getDBPassword(tenantId);
         }
         EntityManager em = getEntityManager(Util.getDBAdmin(tenantId), tenantId);
@@ -210,6 +214,7 @@ public class DB {
      * @param subdomain will be used as schema name
      */
     public static String onboard(String tenantId, TenantInfo tenantInfo) {
+    	logger.info("--> DB.onboard("+tenantId+","+tenantInfo.toString()+")");
         // DB schema should be in  upper case
         String schema = tenantInfo.subdomain.toUpperCase();
 
@@ -244,12 +249,12 @@ public class DB {
             tenant.setSubaccountid(tenantInfo.subaccountId);
             tenant.setPassword(Util.getDBPassword(tenantId));
             
-            // create user and schema
+//            // create user and schema
             emAdmin.getTransaction().begin();     
-            Query q = emAdmin.createNativeQuery("CREATE USER " + schema + " PASSWORD " + tenant.getPassword() + " NO FORCE_FIRST_PASSWORD_CHANGE;");
-            q.executeUpdate();
-            q = emAdmin.createNativeQuery("ALTER USER " + schema + " DISABLE PASSWORD LIFETIME;");
-            q.executeUpdate();
+//            Query q = emAdmin.createNativeQuery("CREATE USER " + schema + " PASSWORD " + tenant.getPassword() + " NO FORCE_FIRST_PASSWORD_CHANGE;");
+//            q.executeUpdate();
+//            q = emAdmin.createNativeQuery("ALTER USER " + schema + " DISABLE PASSWORD LIFETIME;");
+//            q.executeUpdate();
 
             // persist tenant
             emAdmin.merge(tenant);
@@ -265,32 +270,32 @@ public class DB {
         try {
             logger.info("got EntityManager for new schema " + emTenant);
            
-            // Create Tables for new tenant:
-
-            // read sql file and break up into single create statements:
-            String sql_all = null;
-            try (InputStream inputStream = Util.class.getResourceAsStream("/create.sql")) {
-                InputStreamReader isReader = new InputStreamReader(inputStream);
-                BufferedReader reader = new BufferedReader(isReader);
-                StringBuffer sb = new StringBuffer();
-                String str;
-                while((str = reader.readLine()) != null){
-                   sb.append(str);
-                }
-                sql_all = sb.toString();
-            }
-            // set correct schema for all table creation commands
-            sql_all = sql_all.replaceAll("__SCHEMANAME__", schema.toUpperCase());
-            var sqls = sql_all.split(";");
-            if (sqls == null || sqls.length < 1) {
-                throw new WebApplicationException("cannot parse table creation file", 550);
-            }
+//            // Create Tables for new tenant:
+//
+//            // read sql file and break up into single create statements:
+//            String sql_all = null;
+//            try (InputStream inputStream = Util.class.getResourceAsStream("/create.sql")) {
+//                InputStreamReader isReader = new InputStreamReader(inputStream);
+//                BufferedReader reader = new BufferedReader(isReader);
+//                StringBuffer sb = new StringBuffer();
+//                String str;
+//                while((str = reader.readLine()) != null){
+//                   sb.append(str);
+//                }
+//                sql_all = sb.toString();
+//            }
+//            // set correct schema for all table creation commands
+//            sql_all = sql_all.replaceAll("__SCHEMANAME__", schema.toUpperCase());
+//            var sqls = sql_all.split(";");
+//            if (sqls == null || sqls.length < 1) {
+//                throw new WebApplicationException("cannot parse table creation file", 550);
+//            }
             emTenant.getTransaction().begin();
-            for (String create_stmt : sqls) {
-                // create tables:
-                Query q = emTenant.createNativeQuery(create_stmt);
-                q.executeUpdate();
-            }
+//            for (String create_stmt : sqls) {
+//                // create tables:
+//                Query q = emTenant.createNativeQuery(create_stmt);
+//                q.executeUpdate();
+//            }
             // set predefined configuration data in config table:
             Configuration c = new Configuration();
             c.setId(1L);
@@ -365,9 +370,9 @@ public class DB {
             
             emAdmin.getTransaction().begin();
             String subaccountAndUserAndSchemaName = tenant.getSchema();
-            // delete schema:
-            Query q = emAdmin.createNativeQuery("DROP USER " + subaccountAndUserAndSchemaName.toUpperCase() + " CASCADE;");
-            q.executeUpdate();
+//            // delete schema:
+//            Query q = emAdmin.createNativeQuery("DROP USER " + subaccountAndUserAndSchemaName.toUpperCase() + " CASCADE;");
+//            q.executeUpdate();
             // delete tenant entry
             emAdmin.remove(tenant);
     

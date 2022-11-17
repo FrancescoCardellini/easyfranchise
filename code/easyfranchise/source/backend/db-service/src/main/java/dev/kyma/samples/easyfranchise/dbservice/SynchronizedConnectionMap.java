@@ -10,6 +10,8 @@ import org.hibernate.service.spi.ServiceRegistryImplementor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import dev.kyma.samples.easyfranchise.Util;
+
 /**
  * Map Connections to Tenant String. Singleton class to collaborate closely with MultiTenantProvider
  * All public methods are synchronized and forward work to private instance methods 
@@ -111,15 +113,16 @@ public class SynchronizedConnectionMap {
     }
 
     private void initConnectionProviderForTenant(String tenantId) {
-        tenantId = tenantId.toUpperCase();
+//        tenantId = tenantId.toUpperCase();
         logger.warn("initiate connection for tenant " + tenantId);
         if (originalSettings == null) {
             logger.error("configuration not found - cannot create ConnectionProvider");
         }
         Map<String, String> props = new HashMap<>(originalSettings);
-        props.put("hibernate.connection.username", tenantId);
-        props.put("hibernate.connection.password", DB.getPasswordForSchema(tenantId, tenantId)); // XXX
-        props.put("hibernate.connection.url", DB.getConnectionUrl(tenantId)); // XXX
+//        props.put("hibernate.connection.username", tenantId);
+        props.put("hibernate.connection.username", Util.getDBAdmin(tenantId));
+        props.put("hibernate.connection.password", DB.getPasswordForSchema(tenantId,tenantId));
+        props.put("hibernate.connection.url", DB.getConnectionUrl(tenantId));
 
         try {
             C3P0ConnectionProvider connectionProvider = new C3P0ConnectionProvider();

@@ -28,7 +28,7 @@
 			<property name="hibernate.bytecode.provider" value="javassist" />
 			<property name="hibernate.bytecode.use_reflection_optimizer" value="true" />
 			<property name="hibernate.jdbc.batch_size" value="10000" />
-			<property name="hibernate.multiTenancy" value="SCHEMA" />
+			<property name="hibernate.multiTenancy" value="DATABASE" />
 			<property name="hibernate.tenant_identifier_resolver"
 				value="dev.kyma.samples.easyfranchise.dbservice.SchemaResolver" />
 			<property name="hibernate.multi_tenant_connection_provider"
