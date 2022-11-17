@@ -24,7 +24,7 @@
 
 			<property name="hibernate.show_sql" value="true" />
 			<property name="hibernate.format_sql" value="true" />
-			<property name="hibernate.hbm2ddl.auto" value="update" />
+			<property name="hibernate.hbm2ddl.auto" value="none" />
 			<property name="hibernate.bytecode.provider" value="javassist" />
 			<property name="hibernate.bytecode.use_reflection_optimizer" value="true" />
 			<property name="hibernate.jdbc.batch_size" value="10000" />
