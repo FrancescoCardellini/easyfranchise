@@ -114,11 +114,12 @@ public class SynchronizedConnectionMap {
 
     private void initConnectionProviderForTenant(String tenantId) {
 //        tenantId = tenantId.toUpperCase();
-        logger.warn("initiate connection for tenant " + tenantId);
+        logger.warn("initiate connection for tenant " + tenantId + "17/11/2022 15:09");
         if (originalSettings == null) {
             logger.error("configuration not found - cannot create ConnectionProvider");
         }
         Map<String, String> props = new HashMap<>(originalSettings);
+        props.put("hibernate.connection.tenantid", tenantId);
 //        props.put("hibernate.connection.username", tenantId);
         props.put("hibernate.connection.username", Util.getDBAdmin(tenantId));
         props.put("hibernate.connection.password", DB.getPasswordForSchema(tenantId,tenantId));
@@ -143,7 +144,8 @@ public class SynchronizedConnectionMap {
         this.serviceRegistry = serviceRegistry;
         originalSettings = serviceRegistry.getService(ConfigurationService.class).getSettings();
         logger.debug(originalSettings.toString());
-        String tenant = originalSettings.get("hibernate.connection.username").toUpperCase();
+//        String tenant = originalSettings.get("hibernate.connection.username").toUpperCase();
+        String tenant = originalSettings.get("hibernate.connection.tenantid");
         if (connectionProviderMap.get(tenant) != null) {
             // already mapped - nothing more to do
             logger.warn("inject service was already done for tenant " + tenant + " connections mapped: " + connectionProviderMap.size());

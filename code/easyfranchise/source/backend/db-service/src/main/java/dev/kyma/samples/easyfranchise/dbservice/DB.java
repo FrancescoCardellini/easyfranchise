@@ -54,6 +54,7 @@ public class DB {
             MultiTenantProvider.assignInitializerSchema(tenantId);  // needed for very first DB connection
             try {
                 Map<String, String> props = new HashMap<String, String>();
+                props.put("hibernate.connection.tenantid", tenantId);
                 props.put("hibernate.connection.username", dbschema);
                 props.put("hibernate.connection.password", getPasswordForSchema(dbschema, tenantId));
                 props.put("hibernate.connection.url", getConnectionUrl(tenantId));

@@ -432,7 +432,7 @@ public class EFService extends BaseRS {
     @Path("mentor")
     @Consumes(MediaType.APPLICATION_JSON)
     public Response createOrUpdateMentor(Mentor mentor, @Context HttpHeaders headers, @Context ContainerRequestContext resContext) {
-        logger.info(Util.createLogDetails(resContext, headers));
+        logger.info(Util.createLogDetails(resContext, headers) + mentor.toString());
         try {
             var tenantId = Util.validateTenantAccess(headers);
             ConnectionParameter param = new ConnectionParameter(RequestMethod.PUT, Util.getDBServiceUrl(tenantId) + "mentor").setAcceptJsonHeader();
