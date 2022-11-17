@@ -63,3 +63,5 @@ sudo docker build --no-cache=true --rm -t $1/sap-btp-trial-mission-test:ui-0.1  
 sudo docker push $1/sap-btp-trial-mission-test:ui-0.1
 
 kubectl apply -f ./code/easyfranchise/deployment/k8s/ui.yaml
+
+#sudo docker image prune -a

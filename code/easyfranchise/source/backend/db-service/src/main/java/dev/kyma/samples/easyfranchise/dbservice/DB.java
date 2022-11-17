@@ -274,13 +274,14 @@ public class DB {
 				sql_all = sb.toString();
 			}
 			// set correct schema for all table creation commands
-			sql_all = sql_all.replaceAll("__SCHEMANAME__", schema.toUpperCase());
+			sql_all = sql_all.replaceAll("__SCHEMANAME__", db_admin.toUpperCase());
 			var sqls = sql_all.split(";");
 			if (sqls == null || sqls.length < 1) {
 				throw new WebApplicationException("cannot parse table creation file", 550);
 			}
 			for (String create_stmt : sqls) {
 				// create tables:
+				logger.info("Create table statement: " + create_stmt);
 				Query q = emAdmin.createNativeQuery(create_stmt);
 				q.executeUpdate();
 			}
